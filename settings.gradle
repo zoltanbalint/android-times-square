@@ -1,0 +1,13 @@
+include ':app-zumzi'
+include ':app-kolektiva'
+include ':common'
+include ':submodules:pagerSlidingTabStrip'
+project(':submodules:pagerSlidingTabStrip').projectDir = new File('common/submodules/pagerSlidingTabStrip')
+include ':submodules:switchCompatLibrary'
+project(':submodules:switchCompatLibrary').projectDir = new File('common/submodules/switchCompatLibrary')
+include ':facebook'
+project(':facebook').projectDir = new File('libraries/facebook-android-sdk/facebook')
+include ':neo-lib'
+project(':neo-lib').projectDir = new File('libraries/neo-lib/neo-lib')
+include ':facebook'
+project(':facebook').projectDir = new File('libraries/facebook-android-sdk/facebook')
