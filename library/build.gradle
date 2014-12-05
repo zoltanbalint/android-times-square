@@ -1,4 +1,15 @@
 apply plugin: 'com.android.library'
+apply plugin: 'android-test'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    }
+    dependencies {
+        classpath 'org.robolectric.gradle:gradle-android-test-plugin:0.10.0'
+    }
+}
 
 android {
     compileSdkVersion 19
@@ -17,7 +28,33 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+
+    sourceSets {
+        androidTest.setRoot('src/androidTest') //note that this is androidTest instead of instrumentTest
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES.txt'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/dependencies.txt'
+        exclude 'META-INF/LGPL2.1'
+        exclude 'LICENSE.txt'
+    }
 }
 
 dependencies {
+    androidTestCompile('org.robolectric:robolectric:2.4')
+    androidTestCompile('junit:junit-dep:4.8.2')
+    compile('com.intellij:annotations:12.0')
+}
+
+androidTest {
+    include '**/*Test.class'
+    maxHeapSize = "2048m"
 }
