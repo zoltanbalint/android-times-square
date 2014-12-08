@@ -17,15 +17,16 @@ android {
 
     // main android config is in rootProject - build.gradle
     defaultConfig {
-        applicationId 'com.squareup.timessquare'
+        // applicationId 'com.squareup.timessquare'
         minSdkVersion 10
         targetSdkVersion 19
     }
 
     buildTypes {
         release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            minifyEnabled false
+//            runProguard false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
 
