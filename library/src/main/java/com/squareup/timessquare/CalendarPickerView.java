@@ -61,7 +61,12 @@ public class CalendarPickerView extends ListView {
          * <li>Have one date selected and then select an earlier date.</li>
          * </ul>
          */
-        RANGE
+        RANGE,
+        /**
+         * Allows to select a fixed date range.
+         * Selects a fixed number of days after the first selected date
+         */
+        FIXED_RANGE
     }
 
     private final CalendarPickerView.MonthAdapter adapter;
@@ -82,6 +87,7 @@ public class CalendarPickerView extends ListView {
     private Calendar monthCounter;
     private boolean displayOnly;
     SelectionMode selectionMode;
+    int selectionRange = 0;
     Calendar today;
     private int dividerColor;
     private int dayBackgroundResId;
@@ -258,6 +264,12 @@ public class CalendarPickerView extends ListView {
          */
         public FluentInitializer inMode(SelectionMode mode) {
             selectionMode = mode;
+            validateAndUpdate();
+            return this;
+        }
+
+        public FluentInitializer selectionRange(int range) {
+            selectionRange = range;
             validateAndUpdate();
             return this;
         }
@@ -558,7 +570,11 @@ public class CalendarPickerView extends ListView {
                     clearOldSelections();
                 }
                 break;
-
+            case FIXED_RANGE:
+                if (selectedCals.size() >= 1) {
+                    clearOldSelections();
+                }
+                break;
             case MULTIPLE:
                 date = applyMultiSelect(date, newlySelectedCal);
                 break;
@@ -598,6 +614,45 @@ public class CalendarPickerView extends ListView {
                         }
                     }
                 }
+            } else if (selectionMode == SelectionMode.FIXED_RANGE && selectedCells.size() == 1) {
+                // Select all days in between start and end.
+                Date start = selectedCells.get(0).getDate();
+                Date end = new Date();
+                end.setTime(selectedCells.get(0).getDate().getTime() + selectionRange * 86400000);
+
+                // set first item
+                selectedCells.get(0).setRangeState(MonthCellDescriptor.RangeState.FIRST);
+
+                loop:
+                for (List<List<MonthCellDescriptor>> month : cells) {
+                    for (List<MonthCellDescriptor> week : month) {
+                        for (MonthCellDescriptor singleCell : week) {
+                            if (singleCell.getDate().after(start)
+                                    && singleCell.isCurrentMonth()
+                                    && singleCell.getDate().before(end)
+                                    && (singleCell.isSelectable() || singleCell.isHighlightable())) {
+
+                                Logr.d(singleCell.getDate().toString() + " > " + singleCell.isHighlightable());
+                                if (!singleCell.isHighlightable()) {
+                                    clearOldSelections();
+                                    break loop;
+                                }
+                                singleCell.setSelected(true);
+                                singleCell.setRangeState(MonthCellDescriptor.RangeState.MIDDLE);
+                                selectedCells.add(singleCell);
+                            }
+                        }
+                    }
+                }
+
+                // check if we have the full range selected
+                if (selectedCells.size() != selectionRange) {
+                    clearOldSelections();
+                }
+                // set last item
+                if (selectedCells.size() > 0) {
+                    selectedCells.get(selectedCells.size() - 1).setRangeState(RangeState.LAST);
+                }
             }
         }
 
@@ -609,6 +664,7 @@ public class CalendarPickerView extends ListView {
     private void clearOldSelections() {
         for (MonthCellDescriptor selectedCell : selectedCells) {
             // De-select the currently-selected cell.
+            selectedCell.setRangeState(RangeState.NONE);
             selectedCell.setSelected(false);
         }
         selectedCells.clear();
@@ -758,9 +814,10 @@ public class CalendarPickerView extends ListView {
                 boolean isCurrentMonth = cal.get(MONTH) == month.getMonth();
                 boolean isSelected = isCurrentMonth && containsDate(selectedCals, cal);
                 boolean isSelectable =
-                        isCurrentMonth && betweenDates(cal, minCal, maxCal) && isDateSelectable(date);
+                        isCurrentMonth && betweenDates(cal, minCal, maxCal) && isDateSelectable(date) && isDateHighlightable(date);
                 boolean isToday = sameDate(cal, today);
-                boolean isHighlighted = isDateHighlightable(date) && containsDate(highlightedCals, cal);
+                boolean isHighlightable = isDateHighlightable(date);
+                boolean isHighlighted = containsDate(highlightedCals, cal);
                 int value = cal.get(DAY_OF_MONTH);
 
                 MonthCellDescriptor.RangeState rangeState = MonthCellDescriptor.RangeState.NONE;
@@ -776,7 +833,7 @@ public class CalendarPickerView extends ListView {
 
                 weekCells.add(
                         new MonthCellDescriptor(date, isCurrentMonth, isSelectable, isSelected, isToday,
-                                isHighlighted, value, rangeState));
+                                isHighlightable, isHighlighted, value, rangeState));
                 cal.add(DATE, 1);
             }
         }
