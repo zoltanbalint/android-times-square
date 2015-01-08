@@ -617,21 +617,29 @@ public class CalendarPickerView extends ListView {
             } else if (selectionMode == SelectionMode.FIXED_RANGE && selectedCells.size() == 1) {
                 // Select all days in between start and end.
                 Date start = selectedCells.get(0).getDate();
-                Date end = new Date();
-                end.setTime(selectedCells.get(0).getDate().getTime() + selectionRange * 86400000);
+                Calendar end = Calendar.getInstance(locale);
+                end.setTime(start);
+                end.add(Calendar.DAY_OF_MONTH, selectionRange);
+
+                Logr.d(start.toString() + " -> " + end.getTime().toString());
 
                 // set first item
                 selectedCells.get(0).setRangeState(MonthCellDescriptor.RangeState.FIRST);
 
+                int i = 1;
                 loop:
                 for (List<List<MonthCellDescriptor>> month : cells) {
                     for (List<MonthCellDescriptor> week : month) {
                         for (MonthCellDescriptor singleCell : week) {
                             if (singleCell.getDate().after(start)
                                     && singleCell.isCurrentMonth()
-                                    && singleCell.getDate().before(end)
+                                    && singleCell.getDate().before(end.getTime())
                                     && (singleCell.isSelectable() || singleCell.isHighlightable())) {
 
+                                // do not go overboard - can be an issue with daylight saving
+                                if (i > selectionRange) {
+                                    break loop;
+                                }
                                 Logr.d(singleCell.getDate().toString() + " > " + singleCell.isHighlightable());
                                 if (!singleCell.isHighlightable()) {
                                     clearOldSelections();
@@ -640,6 +648,7 @@ public class CalendarPickerView extends ListView {
                                 singleCell.setSelected(true);
                                 singleCell.setRangeState(MonthCellDescriptor.RangeState.MIDDLE);
                                 selectedCells.add(singleCell);
+                                ++i;
                             }
                         }
                     }
