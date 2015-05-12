@@ -45,7 +45,7 @@ Version 1.1.1 *(2014-02-26)*
 Version 1.1.0 *(2014-01-28)*
 ----------------------------
 
- * New: `OnDateSelected` listener.
+ * New: `OnDateSelected` itemClickListener.
  * New: `setSelectedDate` initialization method.
  * New: Multi-date selection and range selection modes.
  * New: `OnDateConfiguredListener` controls which dates are selectable along with
